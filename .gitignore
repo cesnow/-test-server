@@ -550,3 +550,5 @@ MigrationBackup/
 
 app/web/node_modules/
 app/web_gs/node_modules
+.idea
+.vscode

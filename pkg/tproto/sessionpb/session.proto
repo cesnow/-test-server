@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package session;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "core_types.proto";
+
+option go_package = ".;sessionpb";
+
+message SessionClientData {
+  string server_id = 2;
+  int32 conn_type = 3;
+  int64 auth_id = 4;
+  int64 session_id = 5;
+  string client_ip = 6;
+  bytes payload = 7;
+}
+
+message SessionClientEvent {
+  string server_id = 2;
+  int64 auth_id = 3;
+  int64 session_id = 4;
+  string client_ip = 5;
+}
+
+message HttpSessionData {
+  bytes payload = 2;
+}
+
+message T_session_createSession {
+  SessionClientEvent client = 2;
+}
+
+message T_session_sendDataToSession {
+  SessionClientData data = 2;
+}
+
+message T_session_closeSession {
+  SessionClientEvent client = 2;
+}
+
+message T_session_pushSessionUpdatesData {
+  int64 auth_id = 2;
+  int64 session_id = 3;
+  google.protobuf.Any updates = 4;
+}
+
+message T_session_pushUpdatesData {
+  int64 auth_id = 2;
+  google.protobuf.Any updates = 3;
+}
+
+message T_session_pushRpcResultData {
+  int64 auth_id = 2;
+  int64 session_id = 3;
+  int64 client_req_msg_id = 4;
+  bytes rpc_result_data = 5;
+}
+
+message T_session_TTTTT_TestUser {
+  int64 user_id = 2;
+  int32 status = 3;
+}
+
+message T_session_queryAuthId {
+
+}
+
+message T_session_sendHttpDataToSession {
+  SessionClientData client = 1;
+}
+
+service RpcSession {
+  rpc session_queryAuthId(T_session_queryAuthId) returns (AuthIdInfo) {}
+  rpc session_createSession(T_session_createSession) returns (Bool) {}
+  rpc session_sendDataToSession(T_session_sendDataToSession) returns (Bool) {}
+  rpc session_sendHttpDataToSession(T_session_sendHttpDataToSession) returns (HttpSessionData) {}
+  rpc session_closeSession(T_session_closeSession) returns (Bool) {}
+  rpc session_pushUpdatesData(T_session_pushUpdatesData) returns (Bool) {}
+  rpc session_pushSessionUpdatesData(T_session_pushSessionUpdatesData) returns (Bool) {}
+  rpc session_pushRpcResultData(T_session_pushRpcResultData) returns (Bool) {}
+}
+

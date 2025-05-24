@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package sync;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "core_types.proto";
+
+option go_package = "./;syncpb";
+
+
+
+//--------------------------------------------------------------------------------------------
+message T_sync_pushUpdates {
+  int64 user_id = 2;
+  google.protobuf.Any updates = 3;
+}
+
+
+//--------------------------------------------------------------------------------------------
+message T_sync_pushRpcResult {
+  int64 user_id = 2;
+  int64 auth_id = 3;
+  string server_id = 4;
+  int64 session_id = 5;
+  int64 client_req_msg_id = 6;
+  bytes rpc_result = 7;
+}
+
+service RpcSync {
+  rpc sync_pushUpdates(T_sync_pushUpdates) returns (Void) {}
+  rpc sync_pushRpcResult(T_sync_pushRpcResult) returns (Void) {}
+}
+

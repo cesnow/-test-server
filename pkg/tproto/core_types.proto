@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+option go_package = "kiyudesign.com/cesnow/light-server/pkg/tproto;tproto";
+//option go_package = ".;tproto";
+
+message Bool {
+  bool value = 1;
+}
+
+message Void {}
+
+message RpcError {
+  int32 error_code = 1;
+  string error_message = 2;
+}
+
+// MsgRawData
+message MsgRawData {
+  int32 seq_no = 1;
+  int64 msg_id = 2;
+  int32 bytes = 3;
+  int32 class_id = 4;
+  bytes body = 5;
+}
+
+// TMsgRawDataContainer
+message TMsgRawDataContainer {
+  repeated MsgRawData messages = 1;
+}
+
+// TMessage
+message TMessage {
+  int32 seq_no = 1;
+  int64 msg_id = 2;
+  int32 bytes = 3;
+  google.protobuf.Any object = 4;
+}
+
+// TMsgContainer
+message TMsgContainer {
+  repeated TMessage messages = 1;
+}
+
+// TGzipPacked
+message TGzipPacked {
+  bytes packed_data = 1;
+  google.protobuf.Any obj = 2;
+}
+
+// RpcResult
+message RpcResult {
+  int64 req_msg_id = 1;
+  google.protobuf.Any result = 2;
+}
+
+message TMsgAck {
+  repeated int64 msg_ids = 2;
+}
+
+message BadMsgNotification {
+  int64 bad_msg_id = 3;
+  int32 bad_msg_seqno = 4;
+  int32 error_code = 5;
+}
+
+message DestroySession {
+  int64 session_id = 3;
+}
+
+message DestroySessionOk {
+  DestroySession session = 1;
+}
+
+message DestroySessionNone {
+  DestroySession session = 1;
+}
+
+message NewSessionCreated {
+  int64 first_msg_id = 2;
+  int64 unique_id = 3;
+}
+
+message Ping {
+  int64 ping_id = 2;
+}
+
+message Pong {
+  int64 msg_id = 3;
+  int64 ping_id = 4;
+}
+
+message InitConnection {
+  int32 api_id = 3;
+  string device_model = 4;
+  string system_version = 5;
+  string app_version = 6;
+  string system_lang_code = 7;
+  string lang_pack = 8;
+  string lang_code = 9;
+  bytes query = 12;
+}
+
+message AuthIdInfo {
+  int64 auth_id = 3;
+  int64 session_id = 4;
+  bytes auth_key = 5;
+}

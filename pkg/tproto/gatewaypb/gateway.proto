@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gateway;
+
+import "google/protobuf/wrappers.proto";
+import "core_types.proto";
+
+option go_package = ".;gatewaypb";
+
+message T_gateway_sendDataToGateway {
+  int64 auth_id = 3;
+  int64 session_id = 4;
+  bytes payload = 5;
+}
+
+service RpcGateway {
+  rpc gateway_sendDataToGateway(T_gateway_sendDataToGateway) returns (Bool) {}
+}
+

@@ -1,0 +1,13 @@
+Name: interface.httpserver
+ListenOn: 0.0.0.0:19005
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: interface.httpserver
+
+GNet:
+  Address:
+    - 0.0.0.0:7905
+  SendBuf: 65536
+  ReceiveBuf: 65536
+  Multicore: false

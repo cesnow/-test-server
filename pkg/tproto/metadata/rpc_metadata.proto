@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option go_package = "pkg/tproto/metadata";
+
+package metadata;
+
+message TakeoutMessageRange {
+  int32 min_id = 1;
+  int32 max_id = 2;
+}
+
+message Takeout {
+  int64  id = 1;
+  TakeoutMessageRange range = 2;
+}
+
+message RpcMetadata {
+  string server_id = 1;
+  string client_addr = 3;
+  int64 auth_id = 4;
+  int64 session_id = 5;
+  int64 receive_time = 8;
+
+  int64 user_id = 11;
+  int64 client_msg_id = 12;
+  bool  is_bot = 13;
+
+  int32 layer = 14;
+  string client = 15;
+
+  bool is_admin = 16;
+
+  //    int64 trace_id = 6;
+  //    int64 span_id = 7;
+  Takeout takeout = 20;
+  string lang_pack = 21;
+}

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package status;
+import "core_types.proto";
+
+option go_package = ".;statuspb";
+
+message SessionEntry {
+  int32 constructor = 1;
+  int64 user_id = 2;
+  int64 auth_id = 3;
+  string gateway = 4;
+  int64 expired = 5;
+  string client = 6;
+}
+
+message UserSessionEntryList {
+  int64 user_id = 2;
+  repeated SessionEntry user_sessions = 3;
+}
+
+message T_status_setSessionOnline {
+  int64 user_id = 1;
+  SessionEntry session = 2;
+}
+
+message T_status_setSessionOffline {
+  int64 user_id = 1;
+  int64 auth_id = 2;
+}
+
+message T_status_getUserOnlineSessions {
+  int64 user_id = 1;
+}
+
+service RpcStatus {
+  rpc status_setSessionOnline(T_status_setSessionOnline) returns (Bool) {}
+  rpc status_setSessionOffline(T_status_setSessionOffline) returns (Bool) {}
+  rpc status_getUserOnlineSessions(T_status_getUserOnlineSessions) returns (UserSessionEntryList) {}
+}

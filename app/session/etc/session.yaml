@@ -1,0 +1,28 @@
+Name: interface.session
+ListenOn: 127.0.0.1:18001
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: interface.session
+Cache:
+  - Host: 127.0.0.1:6379
+
+GatewayClient:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: interface.gateway
+StatusClient:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: service.status
+
+BFFProxyClients:
+  Clients:
+    - Etcd:
+        Hosts:
+          - 127.0.0.1:2379
+        Key: bff.bff
+  IDMap:
+    "/configuration.RpcConfiguration": "bff.bff"

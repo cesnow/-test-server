@@ -1,0 +1,18 @@
+Name: interface.gateway
+ListenOn: 0.0.0.0:18000
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: interface.gateway
+GNet:
+  Address:
+    - 0.0.0.0:7913
+    - 0.0.0.0:7824
+  SendBuf: 65536
+  ReceiveBuf: 65536
+  Multicore: false
+Session:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: interface.session

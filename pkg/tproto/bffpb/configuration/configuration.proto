@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package configuration;
+
+import "google/protobuf/wrappers.proto";
+import "core_types.proto";
+
+option go_package = ".;configurationpb";
+
+message help_CountryCode {
+  string country_code = 3;
+  repeated string prefixes = 4;
+  repeated string patterns = 5;
+}
+
+message help_Country {
+  bool hidden = 3;
+  string iso2 = 4;
+  string default_name = 5;
+  google.protobuf.StringValue name = 6;
+  repeated help_CountryCode country_codes = 7;
+}
+
+message help_CountriesList {
+  repeated help_Country countries = 3;
+  int32 hash = 4;
+}
+
+message T_help_getCountriesList {
+  string lang_code = 3;
+  int32 hash = 4;
+}
+
+message T_help_tryNotifyUser {
+  int64 user_id = 2;
+  string message =  3;
+}
+
+message T_help_testReceiveMsg {
+  int64 from_user_id = 2;
+  string message = 3;
+}
+
+service RpcConfiguration {
+  rpc help_getCountriesList(T_help_getCountriesList) returns (help_CountriesList) {}
+  rpc help_tryNotifyUser(T_help_tryNotifyUser) returns (Bool) {}
+}

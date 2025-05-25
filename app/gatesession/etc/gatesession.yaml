@@ -20,7 +20,7 @@ MCP:
     name: my-mcp-server
     messageTimeout: 30s
     sseEndpoint: /
-    baseUrl: http://gatesession:7915
+#    baseUrl: http://gatesession:7915
     cors:
       - http://localhost:3000
       - http://localhost:3080

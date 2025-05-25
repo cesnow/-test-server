@@ -1,0 +1,21 @@
+services:
+  gatesession:
+    build:
+      context: ../../../
+      dockerfile: deployments/docker-compose/gatesession/Dockerfile
+    image: gatesession
+    container_name: gatesession
+    ports:
+      - "7900:7900"
+      - "7901:7901"
+      - "7905:7905"
+      - "7910:7910"
+      - "7915:7915"
+    command: [ "./gatesession", "-f", "/etc/gatesession.yaml" ]
+    restart: unless-stopped
+    networks:
+      - web_librechat_default
+
+networks:
+  web_librechat_default:
+    external: true

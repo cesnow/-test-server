@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/zeromicro/go-zero/mcp"
 	"github.com/zeromicro/go-zero/zrpc"
 	compare "kiyudesign.com/cesnow/light-server/pkg/contains"
 )
@@ -8,6 +9,7 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 	GNet *GNetConfig
+	MCP  mcp.McpConf
 }
 
 type GNetConfig struct {

@@ -131,7 +131,7 @@ func (s *Server) OnTraffic(c gnet.Conn) (action gnet.Action) {
 
 func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
 	s.tickNumber = s.tickNumber + 1
-	if s.tickNumber%10 == 0 {
+	if s.tickNumber%15 == 0 {
 		logx.Statf("connection count: %d", s.eng.CountConnections())
 	}
 	delay = time.Second * 1

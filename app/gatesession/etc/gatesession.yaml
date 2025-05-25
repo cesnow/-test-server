@@ -1,0 +1,27 @@
+Name: interface.httpserver
+ListenOn: 0.0.0.0:7900
+#Etcd:
+#  Hosts:
+#    - 127.0.0.1:2379
+#  Key: interface.httpserver
+
+GNet:
+  Address:
+    - 0.0.0.0:7905
+  SendBuf: 65536
+  ReceiveBuf: 65536
+  Multicore: false
+
+MCP:
+  name: mcp-server
+  host: 0.0.0.0
+  port: 7915
+  mcp:
+    name: my-mcp-server
+    messageTimeout: 30s
+    sseEndpoint: /
+    baseUrl: http://gatesession:7915
+    cors:
+      - http://localhost:3000
+      - http://localhost:3080
+      - "*"

@@ -550,5 +550,7 @@ MigrationBackup/
 
 app/web/node_modules/
 app/web_gs/node_modules
+app/web_librechat/node_modules
+app/web_librechat/.env
 .idea
 .vscode

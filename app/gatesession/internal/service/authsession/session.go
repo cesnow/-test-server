@@ -37,6 +37,7 @@ const (
 type messageData struct {
 	confirmFlag  bool
 	compressFlag bool
+	clientMsgId  int64
 	obj          []byte
 }
 
@@ -191,7 +192,7 @@ func (c *session) onSessionMessageData(ctx context.Context, gatewayId string, cl
 
 		if m2.Event == "ack" {
 			// unmarshal and ack
-			c.onMsgAck(ctx, gatewayId, m2.MsgId, m2.SeqNo, []int64{})
+			c.onMsgAck(ctx, gatewayId, m2.MsgId, []int64{})
 		} else {
 			inMsg := c.inQueue.AddMsgId(m2.MsgId)
 			if inMsg.state == NONE {
@@ -239,6 +240,7 @@ func (c *session) onTimer(ctx context.Context) bool {
 
 func (c *session) generateMessageSeqNo(increment bool) int32 {
 	value := c.nextSeqNo
+	logx.Info("generateMessageSeqNo - value: ", value)
 	if increment {
 		c.nextSeqNo++
 		return int32(value*2 + 1)
@@ -247,7 +249,7 @@ func (c *session) generateMessageSeqNo(increment bool) int32 {
 	}
 }
 
-func (c *session) sendPushToQueue(ctx context.Context, gatewayId string, pushMsgId int64, pushMsg []byte) {
+func (c *session) sendPushToQueue(ctx context.Context, gatewayId string, pushMsgId int64, reqMsgId int64, event string, pushMsg []byte) {
 
 	//if x.GetOffset() > 256 {
 	//	gzipPacked := &tproto.TGzipPacked{
@@ -260,20 +262,24 @@ func (c *session) sendPushToQueue(ctx context.Context, gatewayId string, pushMsg
 
 	rawMsg := &transport.TMsgRawData{
 		MsgId: nextMessageId(),
-		SeqNo: c.generateMessageSeqNo(true),
-		Body:  pushMsg,
+		//SeqNo:    c.generateMessageSeqNo(true),
+		ReqMsgId: reqMsgId,
+		Event:    event,
+		Body:     pushMsg,
 	}
 	c.outQueue.AddPushUpdates(pushMsgId, rawMsg)
 }
 
-func (c *session) sendRawToQueue(ctx context.Context, gatewayId string, msgId int64, confirm bool, raw []byte) {
+func (c *session) sendRawToQueue(ctx context.Context, gatewayId string, reqMsgId int64, confirm bool, event string, raw []byte) {
 
 	rawMsg2 := &transport.TMsgRawData{
 		MsgId: nextMessageId(),
-		SeqNo: c.generateMessageSeqNo(confirm),
-		Body:  raw,
+		//SeqNo:    c.generateMessageSeqNo(confirm),
+		ReqMsgId: reqMsgId,
+		Event:    event,
+		Body:     raw,
 	}
-	c.outQueue.AddNotifyMessage(msgId, confirm, rawMsg2)
+	c.outQueue.AddNotifyMessage(reqMsgId, confirm, rawMsg2)
 }
 
 func (c *session) sendRawDirectToGateway(ctx context.Context, gatewayId string, raw *transport.TMsgRawData) (bool, error) {
@@ -297,8 +303,8 @@ func (c *session) sendDirectToGateway(ctx context.Context, gatewayId string, con
 
 	rawMsg := &transport.TMsgRawData{
 		MsgId: nextMessageId(),
-		SeqNo: c.generateMessageSeqNo(confirm),
-		Body:  obj,
+		//SeqNo: c.generateMessageSeqNo(confirm),
+		Body: obj,
 	}
 
 	return c.sessList.cb.sendCb(

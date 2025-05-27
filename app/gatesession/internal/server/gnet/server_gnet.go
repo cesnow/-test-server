@@ -193,6 +193,7 @@ func (s *Server) onReceiveRawMessage(ctx *connContext, c gnet.Conn, msg []byte) 
 		pongBuf, _ := msgpack.Marshal(&pong)
 		tMsg.Event = "pong"
 		tMsg.Body = pongBuf
+		tMsg.ReqMsgId = tMsg.MsgId
 		tMsgBuf, _ := msgpack.Marshal(tMsg)
 		_ = UnThreadSafeWrite(c, tMsgBuf)
 		return gnet.None

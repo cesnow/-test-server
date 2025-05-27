@@ -2,8 +2,8 @@ package gnet
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/zeromicro/go-zero/core/contextx"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
 
@@ -14,7 +14,7 @@ func (s *Server) SendDataToClient(ctx context.Context, gatewayId string, authId 
 
 	logx.Infof("sendToClient - gatewayId: %s, authId: %d, sessionId: %d, dataLen: %v", gatewayId, authId, sessionId, len(data.Body))
 
-	resultData, _ := json.Marshal(data)
+	resultData, _ := msgpack.Marshal(data)
 
 	_, connIdList := s.authSessionMgr.FoundSessionConnId(authId, sessionId)
 	if len(connIdList) == 0 {

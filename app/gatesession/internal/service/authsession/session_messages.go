@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/vmihailenco/msgpack/v5"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
 	"math"
 	"time"
@@ -11,12 +12,16 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string, msgId *inboxMsg, event string, data []byte) bool {
+type TestResponse struct {
+	Msg string `json:"msg" msgpack:"msg"`
+}
+
+func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string, inMsg *inboxMsg, event string, data []byte) bool {
 	logx.WithContext(ctx).Infof("onEventRequest - request data: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, event: %s, data: %v}",
 		c,
 		gatewayId,
-		msgId.msgId,
-		msgId.seqNo,
+		inMsg.msgId,
+		inMsg.seqNo,
 		event, hex.EncodeToString(data))
 
 	switch c.sessList.cb.state {
@@ -26,7 +31,15 @@ func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string
 		// TODO: checking without login
 	}
 
-	msgId.state = RECEIVED | DATA_PROCESSING
+	//inMsg.state = RECEIVED | DATA_PROCESSING
+	inMsg.state = RECEIVED | NO_NEED_ACK
+
+	var x any
+	_ = msgpack.Unmarshal(data, &x)
+	logx.WithContext(ctx).Infof("onEventRequest - request data: {data: %+v}", x)
+
+	res := TestResponse{Msg: "hello"}
+	rData, _ := msgpack.Marshal(res)
 
 	//ctx:       contextx.ValueOnlyFrom(ctx),
 	//	sessList:  c.sessList,
@@ -34,18 +47,17 @@ func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string
 	//		clientIp:  clientIp,
 	//		reqMsgId:  msgId.msgId,
 	//		reqMsg:    query,
-	// TODO: nats send event
-	logx.Info("onEventRequest - TODO: NATS SEND EVENT")
+
+	c.sendRawToQueue(ctx, gatewayId, inMsg.msgId, false, event, rData)
 
 	return true
 }
 
-func (c *session) onMsgAck(ctx context.Context, gatewayId string, msgId int64, seqNo int32, msgIds []int64) {
-	logx.WithContext(ctx).Infof("onMsgAck - request data: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, request: {%v}}",
+func (c *session) onMsgAck(ctx context.Context, gatewayId string, msgId int64, msgIds []int64) {
+	logx.WithContext(ctx).Infof("onMsgAck - request data: {sess: %s, gatewayId: %s, msg_id: %d, request: {%v}}",
 		c,
 		gatewayId,
 		msgId,
-		seqNo,
 		msgIds)
 
 	c.outQueue.OnMessagesAck(msgIds, func(inMsgId int64) {
@@ -75,9 +87,9 @@ func (c *session) checkBadMsgNotification(ctx context.Context, gatewayId string,
 	// Handle error case
 	if errorCode != 0 {
 		badMsgNotification := map[string]any{
-			"badMsgId":    msg.MsgId,
-			"badMsgSeqNo": msg.SeqNo,
-			"ErrorCode":   errorCode,
+			"badMsgId": msg.MsgId,
+			//"badMsgSeqNo": msg.SeqNo,
+			"ErrorCode": errorCode,
 		}
 
 		logx.WithContext(ctx).Error("errorCode - ", errorCode, ", event: ", msg.Event)

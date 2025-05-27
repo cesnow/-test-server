@@ -5,19 +5,19 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-func (c *session) onSyncData(ctx context.Context, obj []byte) {
+func (c *session) onSyncData(ctx context.Context, clientMsgId int64, event string, obj []byte) {
 	if obj != nil {
-		logx.WithContext(ctx).Infof("session]]>> - session: %s, syncData: %s", c, obj)
+		logx.WithContext(ctx).Infof("session - session: %s, syncData: %s", c, obj)
 	} else {
-		logx.WithContext(ctx).Infof("session]]>> - session: %s, syncData: nil", c)
+		logx.WithContext(ctx).Infof("session - session: %s, syncData: nil", c)
 	}
 
 	gatewayId := c.getGatewayId()
 
-	pushMessageId := c.sessList.cb.getNextPushId()
-	//c.sendPushToQueue(ctx, gatewayId, pushMessageId, obj)
+	// pushMessageId := c.sessList.cb.getNextPushId()
+	// c.sendPushToQueue(ctx, gatewayId, pushMessageId, clientMsgId, event, obj)
 
-	c.sendRawToQueue(ctx, gatewayId, pushMessageId, false, obj)
+	c.sendRawToQueue(ctx, gatewayId, clientMsgId, false, event, obj)
 
 	if c.sessionOnline() {
 		if gatewayId == "" {

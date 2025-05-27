@@ -345,11 +345,14 @@ func (m *MainAuthWrapper) CloseSession(ctx context.Context, kId int64, gatewayId
 	return nil
 }
 
-func (m *MainAuthWrapper) SyncDataArrived(ctx context.Context, updates []byte) error {
+func (m *MainAuthWrapper) SyncDataArrived(ctx context.Context, clientMsgId int64, updates []byte) error {
 	sData := &syncDataCtx{
 		ctx: contextx.ValueOnlyFrom(ctx),
 		syncData: syncData{
-			data: &messageData{obj: updates},
+			data: &messageData{
+				clientMsgId: clientMsgId,
+				obj:         updates,
+			},
 		},
 	}
 
@@ -400,8 +403,6 @@ func (m *MainAuthWrapper) onSessionData(ctx context.Context, sessionMsg *session
 		return
 	}
 
-	logx.Infof("RRR %+v", tMsg)
-
 	sess, ok := sList.sessions[sessionMsg.sessionId]
 	if !ok {
 		sess = newSession(sessionMsg.sessionId, sList)
@@ -427,7 +428,7 @@ func (m *MainAuthWrapper) onSyncData(ctx context.Context, syncMsg *syncData) {
 	logx.WithContext(ctx).Debugf("authSessions - %s", hex.EncodeToString(syncMsg.data.obj))
 
 	if m.mainUpdatesSession != nil {
-		m.mainUpdatesSession.onSyncData(ctx, syncMsg.data.obj)
+		m.mainUpdatesSession.onSyncData(ctx, syncMsg.data.clientMsgId, "", syncMsg.data.obj)
 	} else {
 		logx.WithContext(ctx).Errorf("authSessions - no mainUpdatesSession")
 	}

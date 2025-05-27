@@ -1,10 +1,11 @@
 package transport
 
 type TMsgRawData struct {
-	MsgId int64  `json:"msgId" msgpack:"msgId"`
-	SeqNo int32  `json:"seqNo" msgpack:"seqNo"`
-	Event string `json:"event" msgpack:"event"`
-	Body  []byte `json:"body" msgpack:"body"`
+	MsgId int64 `json:"msgId" msgpack:"msgId"`
+	//SeqNo    int32  `json:"seqNo" msgpack:"seqNo"`
+	Event    string `json:"event" msgpack:"event"`
+	ReqMsgId int64  `json:"reqMsgId,omitempty" msgpack:"reqMsgId,omitempty"`
+	Body     []byte `json:"body" msgpack:"body"`
 }
 
 type TMsgRawDataContainer struct {

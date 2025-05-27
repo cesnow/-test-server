@@ -2,18 +2,27 @@
 
 import {useTProto} from "@/components/TProto/provider";
 import {TaskAi} from "@/components/MCP/task";
+import {useEffect} from "react";
 
 export default function Home() {
 
-    const {SendMessage} = useTProto();
+    const {SendMessage, onEvent} = useTProto();
 
     const onSendPing = () => {
         SendMessage("ping", {pingId: 123});
     }
 
     const onTest = () => {
-        SendMessage("test", {"hi": "199"});
+        SendMessage("test", {"hi": "199"}, (data: any) => {
+            console.log("test data on callback", data);
+        });
     }
+
+    useEffect(() => {
+        onEvent("test", (data: any) => {
+            console.log("test data on event", data);
+        })
+    }, [])
 
     return (
         <div

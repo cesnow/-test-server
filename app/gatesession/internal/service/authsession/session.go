@@ -2,6 +2,7 @@ package authsession
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
@@ -196,11 +197,27 @@ func (c *session) onSessionMessageData(ctx context.Context, gatewayId string, cl
 		} else {
 			inMsg := c.inQueue.AddMsgId(m2.MsgId)
 			if inMsg.state == NONE {
-				c.onEventRequest(ctx, gatewayId, clientIp, inMsg, m2.Event, m2.Body)
+				c.processEvent(ctx, gatewayId, clientIp, inMsg, m2.Event, m2.Body)
 			} else {
 				continue
 			}
 		}
+	}
+}
+
+func (c *session) processEvent(ctx context.Context, gatewayId, clientIp string, inMsg *inboxMsg, event string, data []byte) {
+	logx.WithContext(ctx).Infof("processEvent - request data: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, event: %s, data: %v}",
+		c,
+		gatewayId,
+		inMsg.msgId,
+		inMsg.seqNo,
+		event, hex.EncodeToString(data))
+	// TODO: preprocess system events
+
+	switch event {
+
+	default:
+		c.onEventRequest(ctx, gatewayId, clientIp, inMsg, event, data)
 	}
 }
 

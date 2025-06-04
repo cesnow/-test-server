@@ -2,56 +2,13 @@ package authsession
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
-	"github.com/vmihailenco/msgpack/v5"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
 	"math"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
-
-type TestResponse struct {
-	Msg string `json:"msg" msgpack:"msg"`
-}
-
-func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string, inMsg *inboxMsg, event string, data []byte) bool {
-	logx.WithContext(ctx).Infof("onEventRequest - request data: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, event: %s, data: %v}",
-		c,
-		gatewayId,
-		inMsg.msgId,
-		inMsg.seqNo,
-		event, hex.EncodeToString(data))
-
-	switch c.sessList.cb.state {
-	case AuthStateNormal:
-		// state is ok
-	default:
-		// TODO: checking without login
-	}
-
-	//inMsg.state = RECEIVED | DATA_PROCESSING
-	inMsg.state = RECEIVED | NO_NEED_ACK
-
-	var x any
-	_ = msgpack.Unmarshal(data, &x)
-	logx.WithContext(ctx).Infof("onEventRequest - request data: {data: %+v}", x)
-
-	res := TestResponse{Msg: "hello"}
-	rData, _ := msgpack.Marshal(res)
-
-	//ctx:       contextx.ValueOnlyFrom(ctx),
-	//	sessList:  c.sessList,
-	//		sessionId: c.sessionId,
-	//		clientIp:  clientIp,
-	//		reqMsgId:  msgId.msgId,
-	//		reqMsg:    query,
-
-	c.sendRawToQueue(ctx, gatewayId, inMsg.msgId, false, event, rData)
-
-	return true
-}
 
 func (c *session) onMsgAck(ctx context.Context, gatewayId string, msgId int64, msgIds []int64) {
 	logx.WithContext(ctx).Infof("onMsgAck - request data: {sess: %s, gatewayId: %s, msg_id: %d, request: {%v}}",

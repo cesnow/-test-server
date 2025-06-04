@@ -6,6 +6,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/vmihailenco/msgpack/v5"
 	"hash/crc32"
+	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/handler"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/server/gnet/websocket"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/service/authsession"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
@@ -146,12 +147,14 @@ func (s *Server) getOrFetchMainAuthWrapper(mainAuthId int64) (*authsession.MainA
 	mainAuth = s.svcCtx.MainAuthMgr.AllocMainAuthWrapper(
 		mainAuthId,
 		func(authId int64) *authsession.MainAuthWrapper {
+			eventHandler := handler.New(context.Background(), s.svcCtx)
 			return authsession.NewMainAuthWrapper(
 				mainAuthId,
 				0,
 				authsession.AuthStateNew,
 				s.svcCtx.MainAuthMgr,
-				s.SendDataToClient)
+				s.SendDataToClient,
+				eventHandler.EventCall)
 		},
 	)
 

@@ -78,10 +78,10 @@ type MainAuthWrapper struct {
 	nextPushId         int64
 	cb                 *MainAuthWrapperManager
 	sendCb             func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error)
+	eventHandler       func(name string, input interface{}) (interface{}, error)
 }
 
-func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainAuthWrapperManager,
-	sendCb func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error)) *MainAuthWrapper {
+func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainAuthWrapperManager, sendCb func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error), eventHandler func(name string, input interface{}) (interface{}, error)) *MainAuthWrapper {
 	mainAuth := &MainAuthWrapper{
 		authId:             mainAuthId,
 		state:              state,
@@ -97,6 +97,7 @@ func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainA
 		running:            syncx.NewAtomicBool(),
 		cb:                 cb,
 		sendCb:             sendCb,
+		eventHandler:       eventHandler,
 	}
 	mainAuth.mainAuth = newSessionList(mainAuth)
 

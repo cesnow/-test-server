@@ -3,6 +3,7 @@ import "./globals.css";
 import {AppProvider} from "@/components/Providers/AppProvider";
 import {WebSocketProvider} from "@/components/WebSocket/provider";
 import React from "react";
+import {ThemeProvider} from "@/components/Layout/theme-provider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -13,15 +14,22 @@ export default function RootLayout({children}: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
     <body
       className={`antialiased`}
     >
-    <WebSocketProvider>
-      <AppProvider>
-        {children}
-      </AppProvider>
-    </WebSocketProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <WebSocketProvider>
+        <AppProvider>
+          {children}
+        </AppProvider>
+      </WebSocketProvider>
+    </ThemeProvider>
     </body>
     </html>
   );

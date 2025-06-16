@@ -22,7 +22,7 @@ func New(ctx context.Context, svcCtx *svc.ServiceContext) *Handler {
 	h.funcRegistry = map[string]reflect.Value{}
 	h.argTypeRegistry = map[string]reflect.Type{}
 
-	_ = h.register("t.account.signUp", h.AccountSignUp)
+	_ = h.register("t.account.signUp", h.AccountSignIn)
 
 	return h
 }
@@ -32,7 +32,7 @@ func (h *Handler) register(name string, fn interface{}) error {
 	fnType := fnVal.Type()
 
 	// Check function has exactly 1 input and 2 output
-	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 2 {
+	if fnType.Kind() != reflect.Func || fnType.NumIn() != 2 || fnType.NumOut() != 2 {
 		return errors.New("function must have 1 input and 2 outputs")
 	}
 
@@ -42,7 +42,7 @@ func (h *Handler) register(name string, fn interface{}) error {
 	}
 
 	h.funcRegistry[name] = fnVal
-	h.argTypeRegistry[name] = fnType.In(0)
+	h.argTypeRegistry[name] = fnType.In(1)
 	return nil
 }
 
@@ -59,7 +59,8 @@ func (h *Handler) EventCall(name string, input interface{}) (interface{}, error)
 		return nil, fmt.Errorf("expected argument of type %s but got %s", expectedArgType, inVal.Type())
 	}
 
-	results := fn.Call([]reflect.Value{inVal})
+	ctxVal := reflect.ValueOf(context.Background())
+	results := fn.Call([]reflect.Value{ctxVal, inVal})
 
 	if !results[1].IsNil() {
 		return nil, results[1].Interface().(error)

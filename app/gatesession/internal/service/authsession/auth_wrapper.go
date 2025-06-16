@@ -105,7 +105,7 @@ func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainA
 	return mainAuth
 }
 
-func (m *MainAuthWrapper) changeAuthState(ctx context.Context, state int, stateData interface{}) {
+func (m *MainAuthWrapper) changeAuthState(ctx context.Context, state int, stateData int64) {
 	m.state = state
 
 	switch state {
@@ -119,7 +119,7 @@ func (m *MainAuthWrapper) changeAuthState(ctx context.Context, state int, stateD
 		m.cb.DeleteByAuthId(m.authId)
 		m.Stop()
 	case AuthStateNormal:
-		m.AuthUserId = stateData.(int64)
+		m.AuthUserId = stateData
 	default:
 		m.AuthUserId = 0
 	}

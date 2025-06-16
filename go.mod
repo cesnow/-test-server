@@ -9,9 +9,12 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/gobwas/httphead v0.1.0
 	github.com/gobwas/ws v1.4.0
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/panjf2000/gnet/v2 v2.7.2
 	github.com/pkg/errors v0.9.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
+	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.10.0
 	github.com/valkey-io/valkey-go v1.0.57
 	github.com/valyala/fastjson v1.6.4

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/hex"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/segmentio/ksuid"
 	"github.com/vmihailenco/msgpack/v5"
 	"hash/crc32"
+	"hash/fnv"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/handler"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/server/gnet/websocket"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/service/authsession"
@@ -165,21 +167,22 @@ func (s *Server) onReceiveRawMessage(ctx *connContext, c gnet.Conn, msg []byte) 
 
 	logx.Debugf("conn(%d-%s) onReceiveRawMessage: [%d] %s", c.Fd(), c.RemoteAddr().String(), len(msg), hex.EncodeToString(msg))
 
-	authId := int64(1010)
-
-	if authId != 0 {
-		authKey := ctx.getAuthIdInfo()
-		if authKey == nil {
-			//data := s.GetAuth(authId)
-			//if data != nil {
-			//	ctx.putAuthIdInfo(data)
-			//}
-			ctx.putAuthIdInfo(&AuthIdInfo{AuthId: authId}) // TODO fake
-		} else if authKey.AuthId != authId {
-			logx.Errorf("conn(%s) getAuthKey - error: invalid key id %d ", c, authId)
+	ctxAuthId := ctx.AuthId()
+	if ctxAuthId == 0 {
+		nFnv := fnv.New64()
+		_, err := nFnv.Write(ksuid.New().Bytes())
+		authId := int64(nFnv.Sum64())
+		if err != nil {
+			logx.Errorf("conn(%s) getAuthKey - error: %v ", c, err)
 			action = gnet.Close
 			return
 		}
+		//data := s.GetAuth(authId)
+		//if data != nil {
+		//	ctx.putAuthId(data)
+		//}
+		logx.Infof("conn(%d-%s) generate authId: %d", c.Fd(), c.RemoteAddr().String(), authId)
+		ctx.putAuthId(authId)
 	}
 
 	// process inner message
@@ -208,6 +211,7 @@ func (s *Server) onReceiveRawMessage(ctx *connContext, c gnet.Conn, msg []byte) 
 		isNew    = ctx.sessionId != 1
 		clientIp = ctx.clientIp
 		connId   = int64(c.Fd())
+		authId   = ctx.AuthId()
 	)
 	if isNew {
 		ctx.sessionId = 1
@@ -216,7 +220,7 @@ func (s *Server) onReceiveRawMessage(ctx *connContext, c gnet.Conn, msg []byte) 
 	_ = s.pool.Submit(func() {
 		mainAuth, _ := s.getOrFetchMainAuthWrapper(authId)
 		if isNew {
-			logx.Infof("addNewSession - authInfo: %d, sessionId: %d, connId: %d", authId, 1, connId)
+			logx.Infof("addNewSession - ctxAuthId: %d, sessionId: %d, connId: %d", authId, 1, connId)
 			if s.authSessionMgr.AddNewSession(authId, 1, connId) {
 				_ = mainAuth.NewSession(context.Background(), authId, s.svcCtx.GatewayId, 1)
 			}

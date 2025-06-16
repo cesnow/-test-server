@@ -6,14 +6,9 @@ import (
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/server/gnet/websocket"
 )
 
-type AuthIdInfo struct {
-	AuthId    int64
-	SessionId int64
-}
-
 type connContext struct {
 	codec     codec.Codec
-	authInfo  *AuthIdInfo
+	authId    int64
 	sessionId int64
 	clientIp  string
 	wsCodec   *websocket.Codec
@@ -33,16 +28,9 @@ func (ctx *connContext) setClientIp(ip string) {
 }
 
 func (ctx *connContext) AuthId() int64 {
-	if ctx.authInfo == nil {
-		return -1
-	}
-	return ctx.authInfo.AuthId
+	return ctx.authId
 }
 
-func (ctx *connContext) putAuthIdInfo(authIdInfo *AuthIdInfo) {
-	ctx.authInfo = authIdInfo
-}
-
-func (ctx *connContext) getAuthIdInfo() *AuthIdInfo {
-	return ctx.authInfo
+func (ctx *connContext) putAuthId(authId int64) {
+	ctx.authId = authId
 }

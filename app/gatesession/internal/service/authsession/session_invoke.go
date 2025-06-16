@@ -15,15 +15,7 @@ func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string
 		msgId.seqNo,
 		reflect.TypeOf(query))
 
-	// TODO: BFF Message without login
-
-	switch event {
-	// update status
-	//	c.sessList.cb.changeAuthState(ctx, mtproto.AuthStateLogout, 0) // logout
-	//	c.sessList.cb.changeAuthState(ctx, mtproto.AuthStateNormal, authAuthorization.GetUser().GetId()) // signin
-	//	c.sessList.cb.changeAuthState(ctx, mtproto.AuthStateNormal, authAuthorization.GetUser().GetId()) //signup
-	//	c.sessList.cb.onSetMainUpdatesSession(ctx, c)
-	}
+	c.onEventRequestBeforeProcess(ctx, gatewayId, clientIp, msgId, event, query)
 
 	// check auth state
 	switch c.sessList.cb.state {
@@ -55,6 +47,8 @@ func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string
 		return false
 	}
 
+	c.onEventRequestAfterProcess(ctx, gatewayId, clientIp, msgId, event, payload, result)
+
 	resultBytes, err := msgpack.Marshal(result)
 	if err != nil {
 		logx.WithContext(ctx).Errorf("onEventRequest - error: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, request: {%s}}",
@@ -77,5 +71,22 @@ func checkEventWithoutLogin(event string) bool {
 	// account auth helper
 	default:
 		return false
+	}
+}
+
+func (c *session) onEventRequestBeforeProcess(ctx context.Context, id string, ip string, inboxMsg *inboxMsg, event string, query []byte) {
+	// update status
+	c.sessList.cb.onSetMainUpdatesSession(ctx, c)
+}
+
+func (c *session) onEventRequestAfterProcess(ctx context.Context, id string, ip string, inboxMsg *inboxMsg, event string, payload any, result any) {
+	// about auth
+	switch event {
+	case "account.auth.logout":
+		c.sessList.cb.changeAuthState(ctx, AuthStateLogout, 0)
+	case "account.auth.signIn":
+		//accountSignIn := result.(*handler.AccountSignInResponse)
+		c.sessList.cb.changeAuthState(ctx, AuthStateNormal, 1010)
+	default:
 	}
 }

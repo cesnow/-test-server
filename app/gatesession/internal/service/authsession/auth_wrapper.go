@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/zeromicro/go-zero/core/contextx"
+	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/syncx"
 	"github.com/zeromicro/go-zero/core/threading"
+	"kiyudesign.com/cesnow/light-server/pkg/tproto/statuspb"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
 	"math"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -77,6 +80,7 @@ type MainAuthWrapper struct {
 	nextNotifyId       int64
 	nextPushId         int64
 	cb                 *MainAuthWrapperManager
+	expiredTime        int64
 	sendCb             func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error)
 	eventHandler       func(name string, input interface{}) (interface{}, error)
 }
@@ -96,6 +100,7 @@ func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainA
 		finish:             sync.WaitGroup{},
 		running:            syncx.NewAtomicBool(),
 		cb:                 cb,
+		expiredTime:        120,
 		sendCb:             sendCb,
 		eventHandler:       eventHandler,
 	}
@@ -140,8 +145,38 @@ func (m *MainAuthWrapper) setOnline(ctx context.Context) {
 			m.onlineExpired,
 			m.authId)
 
-		// status set online
-		m.onlineExpired = date + 120
+		var (
+			userK = GetOnlineUserKey(m.AuthUserId)
+			sess  = &statuspb.SessionEntry{
+				UserId:  m.AuthUserId,
+				AuthId:  m.authId,
+				Gateway: m.cb.Service.GatewayId,
+				Expired: date + m.expiredTime,
+				Client:  "",
+			}
+		)
+
+		sessData, _ := jsonx.Marshal(sess)
+		err := m.cb.KV.HsetCtx(
+			ctx,
+			userK,
+			strconv.FormatInt(sess.AuthId, 10),
+			string(sessData))
+		if err != nil {
+			logx.Errorf("auth_wrapper.setSessionOnline(%d) error(%v)", m.AuthUserId, err)
+			return
+		}
+
+		err = m.cb.KV.ExpireCtx(
+			ctx,
+			userK,
+			int(m.expiredTime))
+		if err != nil {
+			logx.Errorf("auth_wrapper.setSessionOnline(%d) error(%v)", m.AuthUserId, err)
+			return
+		}
+
+		m.onlineExpired = date + m.expiredTime
 	} else {
 		//logx.WithContext(ctx).Debugf("[DEBUG] setOnline - not set online: (date: %d, onlineExpired: %d, AuthUserId: %d)",
 		//	date,
@@ -157,7 +192,16 @@ func (m *MainAuthWrapper) trySetOffline(ctx context.Context) {
 
 	if m.AuthUserId > 0 {
 		logx.WithContext(ctx).Infof("[authSessions] offline: %s", m)
-		// status set offline
+
+		_, err := m.cb.Service.KV.HdelCtx(
+			ctx,
+			GetOnlineUserKey(m.AuthUserId),
+			strconv.FormatInt(m.authId, 10))
+		if err != nil {
+			logx.Errorf("auth_wrapper.setSessionOffline(%d) error(%v)", m.AuthUserId, err)
+			return
+		}
+
 	}
 	m.onlineExpired = 0
 }
@@ -166,7 +210,14 @@ func (m *MainAuthWrapper) delOnline(ctx context.Context) {
 	if m.AuthUserId > 0 {
 		logx.Infof("[authSessions] delOnline: %s", m)
 
-		// status set offline
+		_, err := m.cb.Service.KV.HdelCtx(
+			ctx,
+			GetOnlineUserKey(m.AuthUserId),
+			strconv.FormatInt(m.authId, 10))
+		if err != nil {
+			logx.Errorf("status.setSessionOffline(%s) error(%v)", m.authId, err)
+			return
+		}
 	}
 	m.onlineExpired = 0
 }

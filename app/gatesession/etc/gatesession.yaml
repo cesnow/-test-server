@@ -5,6 +5,9 @@ ListenOn: 0.0.0.0:7900
 #    - 127.0.0.1:2379
 #  Key: interface.httpserver
 
+KV:
+  - Host: 127.0.0.1:6379
+
 GNet:
   Address:
     - 0.0.0.0:7905

@@ -65,6 +65,9 @@ func (s *SessionList) changeAuthState(state int) {
 	s.state = state
 }
 
+type SendCb func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error)
+type EventCb func(name string, input interface{}, md *transport.Metadata) (interface{}, error)
+
 type MainAuthWrapper struct {
 	authId             int64
 	state              int
@@ -81,11 +84,11 @@ type MainAuthWrapper struct {
 	nextPushId         int64
 	cb                 *MainAuthWrapperManager
 	expiredTime        int64
-	sendCb             func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error)
-	eventHandler       func(name string, input interface{}) (interface{}, error)
+	sendCb             SendCb
+	eventHandler       func(name string, input interface{}, md *transport.Metadata) (interface{}, error)
 }
 
-func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainAuthWrapperManager, sendCb func(ctx context.Context, gatewayId string, authId int64, sessionId int64, data *transport.TMsgRawData) (bool, error), eventHandler func(name string, input interface{}) (interface{}, error)) *MainAuthWrapper {
+func NewMainAuthWrapper(mainAuthId int64, authUserId int64, state int, cb *MainAuthWrapperManager, sendCb SendCb, eventHandler EventCb) *MainAuthWrapper {
 	mainAuth := &MainAuthWrapper{
 		authId:             mainAuthId,
 		state:              state,

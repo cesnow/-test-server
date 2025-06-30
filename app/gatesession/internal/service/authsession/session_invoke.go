@@ -3,8 +3,11 @@ package authsession
 import (
 	"context"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/zeromicro/go-zero/core/contextx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"kiyudesign.com/cesnow/light-server/pkg/transport"
 	"reflect"
+	"time"
 )
 
 func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string, msgId *inboxMsg, event string, query []byte) bool {
@@ -35,8 +38,19 @@ func (c *session) onEventRequest(ctx context.Context, gatewayId, clientIp string
 	var payload any
 	_ = msgpack.Unmarshal(query, payload)
 
+	md := &transport.Metadata{
+		Ctx:          contextx.ValueOnlyFrom(ctx),
+		ServerId:     c.sessList.cb.cb.Service.GatewayId,
+		ClientAddr:   clientIp,
+		AuthId:       c.sessList.authId,
+		SessionId:    c.sessionId,
+		ReceivedTime: time.Now(),
+		UserId:       c.sessList.cb.AuthUserId,
+		ClientMsgId:  msgId.msgId,
+	}
+
 	// TODO: process request
-	result, err := c.sessList.cb.eventHandler(event, payload)
+	result, err := c.sessList.cb.eventHandler(event, payload, md)
 	if err != nil {
 		logx.WithContext(ctx).Errorf("onEventRequest - error: {sess: %s, gatewayId: %s, msg_id: %d, seq_no: %d, request: {%s}}",
 			c,

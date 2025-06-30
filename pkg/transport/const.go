@@ -1,5 +1,10 @@
 package transport
 
+import (
+	"context"
+	"time"
+)
+
 type TMsgRawData struct {
 	MsgId int64 `json:"msgId" msgpack:"msgId"`
 	//SeqNo    int32  `json:"seqNo" msgpack:"seqNo"`
@@ -21,4 +26,15 @@ type TSendClientData struct {
 
 type Pong struct {
 	PingId int64 `msgpack:"pingId"`
+}
+
+type Metadata struct {
+	Ctx          context.Context
+	ServerId     string
+	ClientAddr   string
+	AuthId       int64
+	SessionId    int64
+	ReceivedTime time.Time
+	UserId       int64
+	ClientMsgId  int64
 }

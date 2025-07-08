@@ -9,6 +9,7 @@ import (
 	"hash/crc32"
 	"hash/fnv"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/handler"
+	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/server/gnet/sse"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/server/gnet/websocket"
 	"kiyudesign.com/cesnow/light-server/app/gatesession/internal/service/authsession"
 	"kiyudesign.com/cesnow/light-server/pkg/transport"
@@ -59,7 +60,10 @@ func (s *Server) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 
 	ctx := newConnContext()
 	ctx.setClientIp(strings.Split(c.RemoteAddr().String(), ":")[0])
+
+	ctx.sseCodec = new(sse.Codec)
 	ctx.wsCodec = new(websocket.Codec)
+
 	ctx.closeDate = time.Now().Unix() + 120
 	c.SetContext(ctx)
 
@@ -79,8 +83,12 @@ func (s *Server) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	}
 
 	defer func() {
-		if ctx.wsCodec != nil {
+		if ctx.connType == ConnectionTypeWebSocket && ctx.wsCodec != nil {
 			ctx.wsCodec.Conn.Release()
+		}
+
+		if ctx.connType == ConnectionTypeSSE && ctx.sseCodec != nil {
+			// pass
 		}
 
 		c.SetContext(nil)
@@ -112,7 +120,16 @@ func (s *Server) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 func (s *Server) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	ctx := c.Context().(*connContext)
 	ctx.closeDate = time.Now().Unix() + 300 + rand.Int63()%10
-	return s.onWebsocketData(ctx, c)
+
+	return s.onSSEData(ctx, c)
+	//switch ctx.connType {
+	//case ConnectionTypeSSE:
+	//	return s.onSSEData(ctx, c)
+	//case ConnectionTypeWebSocket:
+	//	return s.onSSEData(ctx, c)
+	//default:
+	//	return gnet.Close
+	//}
 }
 
 func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
@@ -120,6 +137,11 @@ func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
 	if s.tickNumber%15 == 0 {
 		logx.Statf("connection count: %d", s.eng.CountConnections())
 	}
+
+	if s.tickNumber%30 == 0 {
+		s.sendSSEHeartbeat()
+	}
+
 	delay = time.Second * 1
 	now := time.Now().Unix()
 
@@ -185,7 +207,7 @@ func (s *Server) onReceiveRawMessage(ctx *connContext, c gnet.Conn, msg []byte) 
 		ctx.putAuthId(authId)
 	}
 
-	// process inner message
+	// process the inner message
 	var tMsg *transport.TMsgRawData
 	err := msgpack.Unmarshal(msg, &tMsg)
 	if err != nil {
@@ -266,7 +288,14 @@ func UnThreadSafeWrite(c gnet.Conn, msg any) error {
 		return err
 	}
 
-	err = wsutil.WriteServerBinary(c, data)
+	if ctx.connType == ConnectionTypeWebSocket {
+		err = wsutil.WriteServerBinary(c, data)
+	} else if ctx.connType == ConnectionTypeSSE {
+		var sseData []byte
+		sseData, err = ctx.sseCodec.Encode("data", data)
+		_, err = c.Write(sseData)
+	}
+
 	if err != nil {
 		logx.Errorf("conn[%v] [err=%v]", c.RemoteAddr().String(), err.Error())
 		return err

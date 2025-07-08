@@ -18,7 +18,7 @@ export default function Home() {
 
   const onSSE = () => {
     // useSSEDefault((data: any) => console.log("SSE", data));
-    const eventSource = new EventSource('http://localhost:8801/sse?nt=tylyu&stream=notify')
+    const eventSource = new EventSource('http://localhost:7905')
     eventSource.onmessage = function(event: MessageEvent) {
       console.log(event)
     };
